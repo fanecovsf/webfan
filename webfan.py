@@ -44,7 +44,7 @@ class Link:
                     action(self, *args, **kwargs)
                     break
                 except Exception as e:
-                    time.sleep(2)
+                    time.sleep(self.sleep)
                     print(f'Element not found: {args}')
                     print(e)
         return element
