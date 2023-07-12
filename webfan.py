@@ -2,6 +2,9 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common import keys
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.support.wait import WebDriverWait
 import time
 
 class Link:
@@ -10,6 +13,7 @@ class Link:
         self.headless = headless
         self.link = link
         self.sleep = sleep
+        
 
         match driver:
             case "Chrome":
@@ -28,6 +32,8 @@ class Link:
             case "Firefox":
                 self.driver = webdriver.Firefox(options=Options())
 
+        self.actions = ActionChains(self.driver)
+
     def openLink(self):
         self.driver.get(url=self.link)
         time.sleep(5)
@@ -44,35 +50,41 @@ class Link:
                     action(self, *args, **kwargs)
                     break
                 except Exception as e:
-                    time.sleep(self.sleep)
+                    time.sleep(2)
                     print(f'Element not found: {args}')
                     print(e)
         return element
+    
+    def maximize(self):
+        self.driver.maximize_window()
             
     @tryGeneral
     def clickElement(self, elementXpath):
-        self.driver.find_element(By.XPATH, elementXpath).click()
-
+        WebDriverWait(self.driver, 20).until(EC.element_to_be_clickable((By.XPATH, elementXpath))).click()
 
     @tryGeneral
     def sendKeys(self, elementXpath, text):
-        self.driver.find_element(By.XPATH, elementXpath).send_keys(text)
-    
+        WebDriverWait(self.driver, 20).until(EC.visibility_of_element_located((By.XPATH, elementXpath))).send_keys(text)
 
     @tryGeneral
     def clearField(self, elementXpath):
-        self.driver.find_element(By.XPATH, elementXpath).clear()
-        time.sleep(30)
+        WebDriverWait(self.driver, 20).until(EC.element_to_be_selected((By.XPATH, elementXpath))).clear()
 
     @tryGeneral
     def getValue(self, elementXpath):
-        element = self.driver.find_element(By.XPATH, elementXpath)
-        return element.get_attribute('innerHTML')
+        element = WebDriverWait(self.driver, 20).until(EC.visibility_of_element_located((By.XPATH, elementXpath)))
+        return element.get_attribute('value')
     
     @tryGeneral
-    def pressEnter(self, elemenXpath):
-        self.driver.find_element(By.XPATH, elemenXpath).send_keys(keys.Keys.ENTER)
+    def pressEnter(self, elementXpath):
+        WebDriverWait(self.driver, 20).until(EC.element_to_be_selected((By.XPATH, elementXpath))).send_keys(keys.Keys.ENTER)
+
+    @tryGeneral
+    def clearText(self, elementXpath):
+        self.driver.find_element(By.XPATH, elementXpath).click()
+        self.actions.key_down(keys.Keys.CONTROL).send_keys('a').key_up(keys.Keys.CONTROL).perform()
+        self.driver.find_element(By.XPATH, elementXpath).send_keys(keys.Keys.BACKSPACE)
 
     @tryGeneral
     def sendKeysName(self, elementName, text):
-        self.driver.find_element(By.NAME, elementName).send_keys(text)
+        WebDriverWait(self.driver, 20).until(EC.visibility_of_element_located((By.NAME, elementName))).send_keys(text)
